@@ -67,6 +67,6 @@ public class Worker_1 {
     }
 
     private static void doWork(String task) throws InterruptedException {
-        Thread.sleep(1000);;
+        Thread.sleep(1000);
     }
 }
