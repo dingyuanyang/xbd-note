@@ -3,6 +3,7 @@ package com.xiaobaiding.note.training_mq_02;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.MessageProperties;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
@@ -44,14 +45,18 @@ public class TaskPublisher {
         /**
          * 4 - 声明队列和通道
          */
-        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+        // 声明队列需要持久化
+        boolean durable = true;
+        channel.queueDeclare(QUEUE_NAME, durable, false, false, null);
         System.out.println(QUEUE_NAME + "-->当前任务发布者已经准备要发送任务了");
         /**
          * 5 - 发送任务
          */
         for (int i = 0; i < 20; i++) {
             String task = "任务：" + (i) + ":做点什么？";
-            channel.basicPublish("", QUEUE_NAME, null, task.getBytes());
+            channel.basicPublish("", QUEUE_NAME,
+                    MessageProperties.PERSISTENT_TEXT_PLAIN,
+                    task.getBytes());
             System.out.println("发布任务成功："+task);
         }
         System.out.println("任务发送完成");

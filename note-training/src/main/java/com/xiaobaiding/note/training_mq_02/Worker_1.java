@@ -34,7 +34,8 @@ public class Worker_1 {
         /**
          * 4 - 声明队列和通道
          */
-        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+        boolean durable = true;
+        channel.queueDeclare(QUEUE_NAME, durable, false, false, null);
         System.out.println(QUEUE_NAME + "-->当前工作者1已经准备要接收任务了");
         /**
          *5 - 一次只接受一条未处理的消息
