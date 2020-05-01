@@ -1,4 +1,4 @@
-package com.xiaobaiding.note.training_mq_01;
+package com.xiaobaiding.note.training.rabbitmq.helloworld;
 
 import com.rabbitmq.client.*;
 

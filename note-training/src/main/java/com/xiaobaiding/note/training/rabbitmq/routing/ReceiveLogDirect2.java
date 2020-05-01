@@ -1,4 +1,4 @@
-package com.xiaobaiding.note.training_mq_04;
+package com.xiaobaiding.note.training.rabbitmq.routing;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -11,10 +11,6 @@ import java.util.concurrent.TimeoutException;
 public class ReceiveLogDirect2 {
 
     private final static String LOG_DIRECT_EXCHANGE = "LOGS_DIRECT";
-
-    private final static String[] ROUTING_KEYS = new String[]{
-           "info"
-    };
 
     public static void main(String[] args) throws IOException, TimeoutException {
         /**
@@ -47,13 +43,8 @@ public class ReceiveLogDirect2 {
          */
         channel.exchangeDeclare(LOG_DIRECT_EXCHANGE, "direct");
         String queue = channel.queueDeclare().getQueue();
-        /**
-         * 5 - 绑定队列类型为info
-         */
-        for (String key : ROUTING_KEYS) {
-            channel.queueBind(queue, LOG_DIRECT_EXCHANGE, key);
-        }
-        System.out.println(ROUTING_KEYS.toString()+"队列准备接收消息，info");
+        channel.queueBind(queue, LOG_DIRECT_EXCHANGE,"info");
+        System.out.println( "普通消息队列准备接收消息，info");
         /**
          * 6 - 收取队列信息
          */

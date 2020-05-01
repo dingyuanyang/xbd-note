@@ -1,25 +1,22 @@
-package com.xiaobaiding.note.training_mq_02;
+package com.xiaobaiding.note.training.rabbitmq.subscribe;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.MessageProperties;
+import com.rabbitmq.client.DeliverCallback;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
-/**
- * 任务发布者
- */
-public class TaskPublisher {
+public class LogConsumer {
 
-    private final static String QUEUE_NAME = "TASK_QUEUE";
+
+    private final static String LOG_EXCHANGE = "LOGS";
 
     public static void main(String[] args) throws IOException, TimeoutException {
         /**
          * 1 - 设置RabbitMQ连接工厂信息
          */
-
         String host = "192.168.0.87";
         String username = "admin";
         String password = "admin";
@@ -43,25 +40,28 @@ public class TaskPublisher {
         Channel channel = connection.createChannel();
 
         /**
-         * 4 - 声明队列和通道
+         * 4 - 将接收到的所有消息广播给它知道的所有队列
          */
-        // 声明队列需要持久化
-        boolean durable = true;
-        channel.queueDeclare(QUEUE_NAME, durable, false, false, null);
-        System.out.println(QUEUE_NAME + "-->当前任务发布者已经准备要发送任务了");
+        channel.exchangeDeclare(LOG_EXCHANGE, "fanout");
         /**
-         * 5 - 发送任务
+         * 5 - 通过系统获取一个临时的，独特的，自动删除的队列
          */
-        for (int i = 0; i < 20; i++) {
-            String task = "任务：" + (i) + ":做点什么？";
-            channel.basicPublish("", QUEUE_NAME,
-                    MessageProperties.PERSISTENT_TEXT_PLAIN,
-                    task.getBytes());
-            System.out.println("发布任务成功："+task);
-        }
-        System.out.println("任务发送完成");
-        channel.close();
-        connection.close();
-    }
+        String queueName = channel.queueDeclare().getQueue();
 
+        /**
+         * 6 - 绑定临时生成的队列和转换器
+         */
+        channel.queueBind(queueName, LOG_EXCHANGE, "");
+        System.out.println("准备接收转换器消息：" + LOG_EXCHANGE);
+
+        /**
+         * 7 - 接收消息
+         */
+        DeliverCallback deliverCallback = ((consumerTag, delivery) -> {
+            String msg = new String(delivery.getBody(), "utf-8");
+            System.out.println("当前日志消费者已经接收到消息：" + msg);
+        });
+        channel.basicConsume(queueName, true, deliverCallback, k -> {
+        });
+    }
 }

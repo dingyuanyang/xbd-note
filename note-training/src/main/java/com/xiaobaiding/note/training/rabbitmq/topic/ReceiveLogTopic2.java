@@ -1,18 +1,22 @@
-package com.xiaobaiding.note.training_mq_04;
+package com.xiaobaiding.note.training.rabbitmq.topic;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.DeliverCallback;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
-public class EmitLogDirect {
+public class ReceiveLogTopic2 {
+    private final static String LOG_TOPIC_EXCHANGE = "LOGS_TOPIC";
 
-    private final static String LOG_DIRECT_EXCHANGE = "LOGS_DIRECT";
-
-    private final static String[] ROUTING_KEYS = new String[]{
-            "info", "warning", "error"
+    /**
+     * 速度.颜色.动物
+     */
+    private final static String[] TOPIC_KEYS = new String[]{
+            "*.*.rabbit",
+            "lazy.#",
     };
 
     public static void main(String[] args) throws IOException, TimeoutException {
@@ -35,25 +39,29 @@ public class EmitLogDirect {
          * 2 - 新建连接信息
          */
         Connection connection = factory.newConnection();
-
         /**
          * 3 - 创建消息通道
          */
         Channel channel = connection.createChannel();
-
         /**
          * 4 - 将接收到的所有消息广播给它知道的所有队列
          */
-        channel.exchangeDeclare(LOG_DIRECT_EXCHANGE, "direct");
-        System.out.println(LOG_DIRECT_EXCHANGE + "-->准备发送路由信息");
-        for (String key : ROUTING_KEYS) {
-            String log = key + "->日志";
-            channel.basicPublish(LOG_DIRECT_EXCHANGE, key, null, log.getBytes());
-            System.out.println("发布日志成功：" + log);
-        }
-        System.out.println("日志发送完成");
-        channel.close();
-        connection.close();
-
+        channel.exchangeDeclare(LOG_TOPIC_EXCHANGE, "topic");
+        String queue = channel.queueDeclare().getQueue();
+        /**
+         * 5 - 绑定队列类型为topic
+         */
+        channel.queueBind(queue, LOG_TOPIC_EXCHANGE, "*.*.rabbit");
+        channel.queueBind(queue, LOG_TOPIC_EXCHANGE,  "lazy.#");
+        System.out.println("Q2：队列准备接收消息！");
+        /**
+         * 6 - 收取队列信息
+         */
+        DeliverCallback callback = (tag, delivery) -> {
+            String animal = new String(delivery.getBody(), "utf-8");
+            System.out.println("动物信息:" + delivery.getEnvelope().getRoutingKey() + ":" + animal);
+        };
+        channel.basicConsume(queue, true, callback, tag -> {
+        });
     }
 }

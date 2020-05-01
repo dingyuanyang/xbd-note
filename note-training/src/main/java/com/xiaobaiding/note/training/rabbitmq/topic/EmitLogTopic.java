@@ -1,4 +1,4 @@
-package com.xiaobaiding.note.training_mq_01;
+package com.xiaobaiding.note.training.rabbitmq.topic;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -7,21 +7,28 @@ import com.rabbitmq.client.ConnectionFactory;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
-/**
- * 消息生产者
- */
-public class RabbitMQProduct {
+public class EmitLogTopic {
+
+    private final static String LOG_TOPIC_EXCHANGE = "LOGS_TOPIC";
 
     /**
-     * 消息队列名称
+     * 速度.颜色.动物
      */
-    private static final String QUEUE_NAME = "hello";
+    private final static String[] TOPIC_KEYS = new String[]{
+            "quick.orange.rabbit",
+            "lazy.orange.elephant",
+            "quick.orange.fox",
+            "lazy.brown.fox",
+            "lazy.pink.rabbit",
+            "quick.brown.fox",
+            "lazy.orange.elephant",
+            "lazy.orange.male.rabbit"
+    };
 
     public static void main(String[] args) throws IOException, TimeoutException {
         /**
          * 1 - 设置RabbitMQ连接工厂信息
          */
-
         String host = "192.168.0.87";
         String username = "admin";
         String password = "admin";
@@ -45,17 +52,17 @@ public class RabbitMQProduct {
         Channel channel = connection.createChannel();
 
         /**
-         * 4 - 声明队列和通道
+         * 4 - 将接收到的所有消息广播给它知道的所有队列
          */
-        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
-        System.out.println(QUEUE_NAME + "-->当前生产者已经准备要发送消息了");
-        /**
-         * 5 - 发布消息到队列
-         */
-        String msg = "你好呀 RabbitMQ";
-        channel.basicPublish("", QUEUE_NAME, null, msg.getBytes());
-        System.out.println("消息发送完成:" + msg);
+        channel.exchangeDeclare(LOG_TOPIC_EXCHANGE, "topic");
+        System.out.println(LOG_TOPIC_EXCHANGE + "-->准备发布动物日志");
+        for (String topic : TOPIC_KEYS) {
+            channel.basicPublish(LOG_TOPIC_EXCHANGE, topic, null, topic.getBytes());
+            System.out.println("发布动物日志：" + topic);
+        }
+        System.out.println("发布动物日志完成");
         channel.close();
         connection.close();
+
     }
 }
